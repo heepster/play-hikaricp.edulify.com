@@ -47,11 +47,11 @@ class HikariCPPluginSpec extends Specification with AroundExample {
       plugin.onStart() must not(throwA[PlayException])
     }
     "check that pool is not working" in new MockedApplication {
-      new HikariCPPlugin(appWithMisconfiguredPool()) must throwA[PlayException]
+      new HikariCPPlugin(appWithMisconfiguredPool()) must throwA[IllegalArgumentException]
     }
     "Avoid pool exception when initializationFailFast=false" in new MockedApplication {
       val plugin = new HikariCPPlugin(appWithNonFailFastPool())
-      plugin.onStart() must not(throwA[PlayException])
+      plugin.onStart() must not(throwA[IllegalArgumentException])
     }
   }
 
@@ -117,7 +117,7 @@ trait MockedApplication extends Scope with Mockito {
   def appWithNonFailFastPool() = {
     val props = properties()
     props.setProperty("db.default.jdbcUrl", "jdbc:h2:mem:test2") // non existent database
-    props.setProperty("db.default.initializationFailFast", "false")
+    props.setProperty("db.default.initializationFailTimeout", "1")
 
     val app = mock[play.api.Application]
     app.mode returns Mode.Dev

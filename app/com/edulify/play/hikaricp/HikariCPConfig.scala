@@ -71,7 +71,7 @@ object HikariCPConfig {
     hikariConfig.setPoolName(config.getString("poolName").getOrElse(dataSourceName))
 
     // Infrequently used
-    config.getBoolean("initializationFailFast").foreach(hikariConfig.setInitializationFailFast)
+    config.getLong("initializationFailTimeout").foreach(hikariConfig.setInitializationFailTimeout)
     config.getBoolean("isolateInternalQueries").foreach(hikariConfig.setIsolateInternalQueries)
     config.getBoolean("allowPoolSuspension").foreach(hikariConfig.setAllowPoolSuspension)
     config.getBoolean("readOnly").foreach(hikariConfig.setReadOnly)

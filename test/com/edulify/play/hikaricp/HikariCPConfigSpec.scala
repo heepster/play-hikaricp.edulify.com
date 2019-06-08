@@ -108,8 +108,8 @@ class HikariCPConfigSpec extends Specification {
         HikariCPConfig.toHikariConfig("testDataSource", config).getMaximumPoolSize == 10
       }
 
-      "initializationFailFast to true" in new Configs {
-        HikariCPConfig.toHikariConfig("testDataSource", config).isInitializationFailFast must beTrue
+      "initializationFailFast to 1" in new Configs {
+        HikariCPConfig.toHikariConfig("testDataSource", config).getInitializationFailTimeout == 1
       }
 
       "isolateInternalQueries to false" in new Configs {
@@ -178,8 +178,8 @@ class HikariCPConfigSpec extends Specification {
 
       "initializationFailFast" in new Configs {
         val props = valid
-        props.setProperty("initializationFailFast", "false")
-        HikariCPConfig.toHikariConfig("testDataSource", asConfig(props)).isInitializationFailFast must beFalse
+        props.setProperty("initializationFailTimeout", "1")
+        HikariCPConfig.toHikariConfig("testDataSource", asConfig(props)).getInitializationFailTimeout == 1
       }
 
       "isolateInternalQueries" in new Configs {

@@ -41,30 +41,44 @@ class HikariCPDBApi(configuration: Configuration, classloader: ClassLoader) exte
     }
   }
 
-  val datasources: List[(DataSource, String)] = dataSourceConfigs.map {
+  val hikariDataSources = dataSourceConfigs.map {
     case (dataSourceName, dataSourceConfig) =>
+      val hikariConfig = HikariCPConfig.toHikariConfig(dataSourceName, dataSourceConfig)
+      Logger.info(s"Creating Pool for datasource '$dataSourceName'")
+      dataSourceName -> (new HikariDataSource(hikariConfig), hikariConfig, dataSourceConfig)
+  }.toMap
+
+  val datasources: List[(DataSource, String)] = hikariDataSources.map {
+    case (dataSourceName, dataSourceTuple) =>
+      val hikariDataSource = dataSourceTuple._1
+      val hikariConfig = dataSourceTuple._2
+      val dataSourceConfig = dataSourceTuple._3
+
       Try {
-        Logger.info(s"Creating Pool for datasource '$dataSourceName'")
-
-        val hikariConfig = HikariCPConfig.toHikariConfig(dataSourceName, dataSourceConfig)
         registerDriver(dataSourceConfig)
-
-        val dataSource = new HikariDataSource(hikariConfig)
 
         if (dataSourceConfig.getBoolean("logSql").getOrElse(false)) {
           val dataSourceWithLogging = new LogSqlDataSource()
-          dataSourceWithLogging.setTargetDSDirect(dataSource)
+          dataSourceWithLogging.setTargetDSDirect(hikariDataSource)
           bindToJNDI(dataSourceConfig, hikariConfig, dataSourceWithLogging)
           dataSourceWithLogging -> dataSourceName
         } else {
-          bindToJNDI(dataSourceConfig, hikariConfig, dataSource)
-          dataSource -> dataSourceName
+          bindToJNDI(dataSourceConfig, hikariConfig, hikariDataSource)
+          hikariDataSource -> dataSourceName
         }
       } match {
         case Success(result) => result
         case Failure(ex) => throw dataSourceConfig.reportError(dataSourceName, ex.getMessage, Some(ex))
       }
   }.toList
+
+  def softEvictConnections(dataSourceName: String) = {
+    hikariDataSources.get(dataSourceName).foreach {
+      case (hikariDataSource: HikariDataSource, _, _) =>
+        Logger.info(s"Soft evicting connections for data source '$dataSourceName'")
+        hikariDataSource.getHikariPoolMXBean.softEvictConnections()
+    }
+  }
 
   def shutdownPool(ds: DataSource) = {
     Logger.info("Shutting down connection pool.")

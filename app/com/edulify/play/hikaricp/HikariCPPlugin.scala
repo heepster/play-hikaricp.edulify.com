@@ -26,9 +26,13 @@ class HikariCPPlugin(app: Application) extends DBPlugin {
 
   override def enabled = app.configuration.getBoolean("hikari.enabled").getOrElse(true)
 
-  private val hikariCPDBApi: DBApi = new HikariCPDBApi(databaseConfig, app.classloader)
+  private val hikariCPDBApi = new HikariCPDBApi(databaseConfig, app.classloader)
 
   def api: DBApi = hikariCPDBApi
+
+  def softEvictConnections(dataSourceName: String) = {
+    hikariCPDBApi.softEvictConnections(dataSourceName)
+  }
 
   override def onStart() = Logger.info("Starting HikariCP connection pool...")
 

@@ -69,7 +69,7 @@ class HikariCPDBApiSpec extends Specification with AroundExample {
         properties.setProperty("default.password", "")
 
         val misConfig = new Configuration(ConfigFactory.parseProperties(properties))
-        new HikariCPDBApi(misConfig, classLoader) must throwA[PlayException]
+        new HikariCPDBApi(misConfig, classLoader) must throwA[IllegalArgumentException]
       }
       "db configuration has no dataSources configured" in new DataSourceConfigs {
         val properties = new Properties()
